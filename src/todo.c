@@ -3,31 +3,10 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include "todo.h"
+#include "database.h"
 
-typedef struct state {
-  sqlite3 *database;
-  char *filename;
-  int command;
-  char *todoText;
-  char *todoID;
-  char *message;
-} state;
 
-enum COMMANDS {
-  ADD_TODO,
-  DELETE_TODO,
-  LIST_TODOS
-};
-
-void die(char *format, ...);
-void parseForCommandLineOptions(state *stateIn, int argc, char **argv);
-void setFilenameFromEnvironment(state *stateIn);
-void openDB(state *stateIn);
-void doCommand(state *stateIn);
-void addTodo(state *stateIn);
-void deleteTodo(state *stateIn);
-void listTodos(state *stateIn);
-void printHelp();
 
 int main(int argc, char **argv)
 {
@@ -59,15 +38,6 @@ void doCommand(state *stateIn)
       printf("not a valid command\n");
       printHelp();
       break;
-  }
-}
-
-void openDB(state *stateIn)
-{
-  int returnCode = sqlite3_open(stateIn->filename, &(stateIn->database));
-  if (returnCode){
-    sqlite3_close(stateIn->database);
-    die("Can't open database: %s\n", sqlite3_errmsg(stateIn->database));
   }
 }
 
@@ -134,26 +104,7 @@ void setFilenameFromEnvironment(state *stateIn)
 
 }
 
-void addTodo(state *stateIn)
-{
-  /*returnCode = sqlite3_exec(db, argv[2], callback, 0, &zErrMsg);
-  if( rc!=SQLITE_OK ){
-    fprintf(stderr, "SQL error: %s\n", zErrMsg);
-    sqlite3_free(zErrMsg);
-  }
-  */
-  printf("added todo: %s\n", stateIn->todoText);
-}
 
-void deleteTodo(state *stateIn)
-{
-  printf("delete todo: %s\n", stateIn->todoID);
-}
-
-void listTodos(state *stateIn)
-{
-  printf("list todos\n");
-}
 
 void printHelp()
 {
