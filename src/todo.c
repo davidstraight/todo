@@ -10,29 +10,30 @@
 
 int main(int argc, char **argv)
 {
-  struct state appState = {0};
-  parseForCommandLineOptions(&appState, argc, argv);
-  if (!appState.filename) {
-    setFilenameFromEnvironment(&appState);
+  State state = {0};
+  parseForCommandLineOptions(&state, argc, argv);
+  if (!state.filename) {
+    setFilenameFromEnvironment(&state);
   }
-  openDB(&appState);
-  doCommand(&appState);
-  sqlite3_close(appState.database);
+  openDB(&state);
+  createTables(&state);
+  doCommand(&state);
+  sqlite3_close(state.database);
   return 0;
 }
 
-void doCommand(state *stateIn)
+void doCommand(State *state)
 {
-  switch (stateIn->command)
+  switch (state->command)
   {
     case ADD_TODO:
-      addTodo(stateIn);
+      addTodo(state);
       break;
     case DELETE_TODO:
-      deleteTodo(stateIn);
+      deleteTodo(state);
       break;
     case LIST_TODOS:
-      listTodos(stateIn);
+      listTodos(state);
       break;
     default:
       printf("not a valid command\n");
@@ -51,7 +52,7 @@ void die(char* format, ...)
   exit (1);
 }
 
-void parseForCommandLineOptions(state *stateIn, int argc, char** argv)
+void parseForCommandLineOptions(State *state, int argc, char** argv)
 {
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i],"--help") == 0) {
@@ -59,32 +60,32 @@ void parseForCommandLineOptions(state *stateIn, int argc, char** argv)
     }
 
     if (strcmp(argv[i], "-f") == 0 && argc > i + 1) {
-      stateIn->filename = argv[i + 1];
+      state->filename = argv[i + 1];
       i++;
-      break;
+      continue;
     }
 
     if (strcmp(argv[i], "add") == 0 && argc > i + 1) {
-      stateIn->command = ADD_TODO;
-      stateIn->todoText = argv[i + 1];
+      state->command = ADD_TODO;
+      state->todo.title = argv[i + 1];
       return;
     }
 
     if (strcmp(argv[i], "delete") == 0 && argc > i + 1) {
-      stateIn->command = DELETE_TODO;
-      stateIn->todoID = argv[i + 1];
+      state->command = DELETE_TODO;
+      state->todo.id = atoi(argv[i + 1]);
       return;
     }
 
     if (strcmp(argv[i], "list") == 0) {
-      stateIn->command = LIST_TODOS;
+      state->command = LIST_TODOS;
       return;
     }
   }
     printHelp();
 }
 
-void setFilenameFromEnvironment(state *stateIn)
+void setFilenameFromEnvironment(State *state)
 {
   char *envPath = NULL;
   char *openFile = NULL;
@@ -100,7 +101,7 @@ void setFilenameFromEnvironment(state *stateIn)
   }
   openFile = strcat(openFile, envPath);
   openFile = strcat(openFile, filename);
-  stateIn->filename = openFile;
+  state->filename = openFile;
 
 }
 
@@ -110,7 +111,11 @@ void printHelp()
 {
   char *helpMessage =
   "Usage: todo [-h --help] [-f <filename>] \n"
-  "<command> [<arg>]\n";
+  "<command> [<arg>]\n"
+  "commands are:\n"
+  "  add\n"
+  "  list\n"
+  "  delete\n";
   printf("%s", helpMessage);
   exit(0);
 }

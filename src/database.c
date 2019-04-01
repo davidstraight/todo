@@ -7,44 +7,71 @@
 #include "todo.h"
 
 
-void openDB(state *stateIn)
+void openDB(State *state)
 {
-  int returnCode = sqlite3_open(stateIn->filename, &(stateIn->database));
+  int returnCode = sqlite3_open(state->filename, &(state->database));
   if (returnCode){
-    sqlite3_close(stateIn->database);
-    die("Can't open database: %s\n", sqlite3_errmsg(stateIn->database));
+    sqlite3_close(state->database);
+    die("Can't open database: %s\n", sqlite3_errmsg(state->database));
   }
 }
 
 
 
-void createTables(state *stateIn)
+void createTables(State *state)
 {
-  char tableExistsQuery[] = "SELECT name FROM sqlite_master WHERE type='table' AND name=?";
   int result = 0;
   sqlite3_stmt *statement = NULL;
   const char *tail = NULL;
-  result = sqlite3_prepare_v2(stateIn->database, tableExistsQuery, strlen(tableExistsQuery), &statement, &tail);
-
-}
-
-void addTodo(state *stateIn)
-{
-  /*returnCode = sqlite3_exec(db, argv[2], callback, 0, &zErrMsg);
-  if( rc!=SQLITE_OK ){
-    fprintf(stderr, "SQL error: %s\n", zErrMsg);
-    sqlite3_free(zErrMsg);
+  char createTableQuery[] = "CREATE TABLE IF NOT EXISTS todo (id INTEGER PRIMARY KEY, title TEXT NOT NULL, notes TEXT, due DATETIME)";
+  result = sqlite3_prepare_v2(state->database, createTableQuery, -1, &statement, &tail);
+  if (result != SQLITE_OK) {
+    die("error preparing query\n");
   }
-  */
-  printf("added todo: %s\n", stateIn->todoText);
+  result = sqlite3_step(statement);
+  if (result != SQLITE_DONE) {
+    die("error executing statement\n");
+  }
 }
 
-void deleteTodo(state *stateIn)
+void addTodo(State *state)
 {
-  printf("delete todo: %s\n", stateIn->todoID);
+  int result = 0;
+  sqlite3_stmt *statement = NULL;
+  const char *tail = NULL;
+  char addTodoQuery[] = "INSERT INTO todo (title, notes, due) VALUES (?,?,?)";
+  result = sqlite3_prepare_v2(state->database, addTodoQuery, -1, &statement, &tail);
+  if (result != SQLITE_OK) {
+    die("error preparing query\n");
+  }
+  result = sqlite3_bind_text(statement, 1, state->todo.title, -1, SQLITE_STATIC);
+  if (result != SQLITE_OK) {
+    die("error binding text\n");
+  }
+  result = sqlite3_bind_text(statement, 2, state->todo.notes, -1, SQLITE_STATIC);
+  if (result != SQLITE_OK) {
+    die("error binding text\n");
+  }
+  result = sqlite3_bind_text(statement, 3, state->todo.due, -1, SQLITE_STATIC);
+  if (result != SQLITE_OK) {
+    die("error binding text\n");
+  }
+  result = sqlite3_step(statement);
+  if (result != SQLITE_DONE) {
+    die("error executing statement\n");
+  }
+
+  printf("added todo: %s\n", state->todo.title);
 }
 
-void listTodos(state *stateIn)
+void deleteTodo(State *state)
 {
+  char deleteTodoQuery[] = "DELETE FROM todo WHERE id = ?";
+  printf("delete todo: %d\n", state->todo.id);
+}
+
+void listTodos(State *state)
+{
+  char listTodoQuery[] = "SELECT * FROM todo";
   printf("list todos\n");
 }

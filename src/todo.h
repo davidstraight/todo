@@ -1,13 +1,19 @@
 #ifndef TODO_H
 #define TODO_H
-typedef struct state {
+typedef struct {
+  int id;
+  char *title;
+  char *notes;
+  char *due;
+
+} Todo ;
+
+typedef struct {
   sqlite3 *database;
   char *filename;
   int command;
-  char *todoText;
-  char *todoID;
-  char *message;
-} state;
+  Todo todo;
+} State;
 
 enum COMMANDS {
   ADD_TODO,
@@ -16,10 +22,10 @@ enum COMMANDS {
 };
 
 void die(char *format, ...);
-void parseForCommandLineOptions(state *stateIn, int argc, char **argv);
-void setFilenameFromEnvironment(state *stateIn);
+void parseForCommandLineOptions(State *state, int argc, char **argv);
+void setFilenameFromEnvironment(State *state);
 
-void doCommand(state *stateIn);
+void doCommand(State *state);
 
 void printHelp();
 
